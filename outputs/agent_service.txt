@@ -1,0 +1,12 @@
+=== EMPLOYEE HR ASSISTANT ===
+Answer: **Employee Referral Policy**  
+- The standard referral bonus is **INR 20,000** per successful hire.  
+- The bonus is paid **after the referred candidate completes 90 calendar days** of continuous employment.
+
+**Estimated Salary for This Month**  
+- Gross monthly salary (based on an annual salary of INR 1,200,000): **INR 100,000.00**  
+- Deduction for 2 unpaid leave days: **INR 6,666.67**  
+- **Estimated payable gross salary:** **INR 93,333.33**  
+
+Let me know if you need any further details!
+Tool used: ['search_company_docs', 'calculate_monthly_salary']
