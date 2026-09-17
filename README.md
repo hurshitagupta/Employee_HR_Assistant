@@ -307,3 +307,126 @@ The automated tests verify:
 - Refusal for information that is not present in the handbook.
 - Absence of fabricated citations on refused responses.
 - Rejection of empty questions.
+
+---
+
+## Streaming UX
+
+The Employee HR Assistant supports real-time response streaming using Server-Sent Events (SSE).
+
+Instead of waiting for retrieval and answer generation to fully complete before returning a response, the service progressively sends intermediate execution steps and generated model chunks to the client.
+
+
+### Server-Sent Events
+
+The `/stream` FastAPI route returns a `StreamingResponse` with:
+
+```text
+Content-Type: text/event-stream
+```
+
+Events are formatted using the SSE protocol.
+
+Example intermediate event:
+
+```text
+event: step
+data: {"name": "retrieval", "status": "started"}
+```
+
+Example streamed model event:
+
+```text
+event: token
+data: {"content": "Eligible"}
+```
+
+Example completion event:
+
+```text
+event: done
+data: {"message": "Stream completed."}
+```
+
+Each SSE event is separated by a blank line so that connected clients can process the events individually.
+
+### Intermediate Steps
+
+The service exposes important execution stages instead of streaming only the final answer.
+
+The current stream includes:
+
+```text
+retrieval - started
+retrieval - finished
+model - started
+token events...
+model - finished
+done
+```
+
+This allows a client to observe the progress of the request while the final answer is still being generated.
+
+### Model Streaming
+
+Model output is generated using asynchronous streaming rather than a standard blocking model invocation.
+
+```python
+async for chunk in model.astream(prompt):
+```
+
+Each available model chunk is immediately converted into an SSE `token` event and sent to the connected client.
+
+This reduces the perceived waiting time because the employee can begin receiving the response before the complete answer has been generated.
+
+### Streaming Endpoint
+
+Start the FastAPI service from the project root:
+
+```bash
+uv run uvicorn streaming_ux.streaming_ux:app
+```
+
+The streaming endpoint is:
+
+```text
+GET /stream
+```
+
+It accepts an employee question through the `question` query parameter.
+
+FastAPI also exposes automatically generated API documentation at:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Streaming Error Handling
+
+Invalid requests and runtime failures are also represented as SSE events.
+
+For example, an empty question produces:
+
+```text
+event: error
+data: {"message": "Question cannot be empty."}
+```
+
+If retrieval or model streaming fails, an error event is emitted and the stream is stopped rather than continuing with an incomplete response.
+
+### Automated Tests
+
+Run the streaming tests with:
+
+```bash
+uv run pytest tests/test_streaming_ux.py -v
+```
+
+The tests verify:
+
+- Correct SSE event formatting.
+- Successful intermediate-step streaming.
+- Presence of retrieval and model execution events.
+- Streaming of generated model chunks.
+- Successful stream completion.
+- Error handling for an empty question.
