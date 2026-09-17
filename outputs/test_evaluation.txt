@@ -1,0 +1,20 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\Hurshita Gupta\OneDrive\Desktop\Employee_HR_Assistant\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\Hurshita Gupta\OneDrive\Desktop\Employee_HR_Assistant
+configfile: pyproject.toml
+plugins: anyio-4.15.1, langsmith-0.12.6
+collecting ... collected 4 items
+
+tests/test_evaluation.py::test_evaluation_has_30_cases PASSED            [ 25%]
+tests/test_evaluation.py::test_supported_evaluation_case PASSED          [ 50%]
+tests/test_evaluation.py::test_refusal_evaluation_case PASSED            [ 75%]
+tests/test_evaluation.py::test_dataset_contains_supported_and_refusal_cases PASSED [100%]
+
+============================== warnings summary ===============================
+grounded_knowledge\grounded_knowledge.py:8
+  C:\Users\Hurshita Gupta\OneDrive\Desktop\Employee_HR_Assistant\grounded_knowledge\grounded_knowledge.py:8: DeprecationWarning: `langchain-community` is being sunset and is no longer actively maintained. See https://github.com/langchain-ai/langchain-community/issues/674 for details and migration guidance toward standalone integration packages.
+    from langchain_community.document_loaders import PyPDFLoader
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 4 passed, 1 warning in 52.43s ========================

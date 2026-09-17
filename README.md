@@ -605,3 +605,226 @@ The tests verify:
 - Normal-latency behavior
 - Application failure handling
 
+---
+
+## Deployment
+
+The Employee HR Assistant is containerized using Docker so that the application and its dependencies can run consistently outside the local development environment.
+
+The deployed container exposes the existing FastAPI streaming service rather than introducing a separate deployment-specific application.
+
+### Docker Architecture
+
+```text
+Employee HR Assistant
+        |
+        v
+    Dockerfile
+        |
+        v
+   Docker Image
+        |
+        v
+ Docker Container
+        |
+        v
+ FastAPI + Uvicorn
+        |
+        v
+   /stream API
+```
+
+### Docker Image
+
+The Docker image uses Python 3.12 and installs the project's pinned dependencies from `requirements.txt`.
+
+The application is started using Uvicorn:
+
+```text
+uvicorn streaming_ux.streaming_ux:app --host 0.0.0.0 --port 8000
+```
+
+Binding the service to `0.0.0.0` makes the FastAPI application accessible outside the container.
+
+### Build the Image
+
+From the project root:
+
+```powershell
+docker build -f deployment/Dockerfile -t employee-hr-assistant .
+```
+
+Verify that the image was created:
+
+```powershell
+docker images
+```
+
+### Run the Container
+
+Environment variables are supplied at runtime rather than being stored inside the Docker image.
+
+```powershell
+docker run -d --env-file .env -p 8000:8000 --name employee-hr-container employee-hr-assistant
+```
+
+The application is then available at:
+
+```text
+http://127.0.0.1:8000
+```
+
+FastAPI documentation is available at:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Verify the Containerized Service
+
+The SSE endpoint can be tested using:
+
+```powershell
+curl.exe -N "http://127.0.0.1:8000/stream?question=How%20many%20annual%20leave%20days%20do%20employees%20receive"
+```
+
+A successful containerized request produces retrieval events, streamed model chunks, and a final completion event.
+
+Example flow:
+
+```text
+event: step
+retrieval started
+
+event: step
+retrieval finished
+
+event: step
+model started
+
+event: token
+...
+
+event: step
+model finished
+
+event: done
+```
+
+This verifies that document retrieval, model access, FastAPI, and SSE streaming operate successfully from the Docker container.
+
+### Secret Hygiene
+
+The `.env` file is excluded from the Docker image using `.dockerignore`.
+
+Runtime configuration such as the OpenRouter API key, base URL, and model name is passed using:
+
+```text
+--env-file .env
+```
+
+This keeps credentials outside the built image.
+---
+
+
+### Evaluation Dataset
+
+The evaluation contains exactly 30 cases covering areas such as:
+
+- Annual leave
+- Sick leave
+- Working hours
+- Probation
+- Employee referrals
+- Internal transfers
+- Performance reviews
+- Payroll
+- Expense claims
+- Notice periods
+- Credential security
+- AI usage policies
+- Unsupported employee questions
+
+The dataset includes both supported handbook questions and intentionally unsupported questions.
+
+This measures not only whether the assistant can retrieve correct information, but also whether it avoids answering questions for which the handbook provides no evidence.
+
+### Evaluation Criteria
+
+For a supported handbook question, a case passes when:
+
+```text
+refused == False
+```
+
+and the expected information is present in the generated answer.
+
+For example:
+
+```text
+Question:
+How many paid annual leave days do full-time employees receive?
+
+Expected:
+18
+```
+
+For an unsupported question, a case passes when:
+
+```text
+refused == True
+```
+
+For example:
+
+```text
+Question:
+Does the company provide free gym membership?
+
+Expected:
+Refusal
+```
+
+This provides a simple and reproducible evaluation instead of using another language model to judge the generated answer.
+
+### Run the 30-Case Evaluation
+
+From the project root:
+
+```powershell
+uv run python -m evaluation.evaluation
+```
+
+The evaluation reports each case individually:
+
+```text
+01. [PASS] ...
+02. [PASS] ...
+03. [FAIL] ...
+```
+
+and produces an aggregate summary:
+
+
+The complete evaluation result is stored in:
+
+```text
+outputs/evaluation.txt
+```
+
+Failed evaluation cases are retained as useful evidence for identifying retrieval or answer-generation limitations rather than modifying the expected values simply to produce a perfect score.
+
+### Evaluation Tests
+
+The evaluation harness also has automated tests that verify:
+
+- The dataset contains exactly 30 cases.
+- Supported handbook questions can pass the evaluation criteria.
+- Unsupported questions correctly pass through refusal.
+- Both supported and refusal cases are represented in the evaluation dataset.
+
+Run:
+
+```powershell
+uv run pytest tests/test_evaluation.py -v
+```

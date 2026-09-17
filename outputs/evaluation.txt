@@ -1,0 +1,46 @@
+=== EMPLOYEE HR ASSISTANT EVALUATION ===
+
+01. [PASS] How many paid annual leave days do full-time employees receive?
+02. [PASS] How many annual leave days are provided each year?
+03. [PASS] How early should annual leave normally be requested?
+04. [PASS] How many unused annual leave days can be carried forward?
+05. [FAIL] By when must carried-forward annual leave be used?
+    Expected: 31 March
+    Actual: Carried‑forward annual leave should normally be used by **31 March of the following year**; otherwise it expires unless an exception is approved in writing by People Operations. 【Page 5】
+06. [PASS] How many paid sick leave days are available each year?
+07. [FAIL] When may medical documentation be required for sick leave?
+    Expected: 3
+    Actual: Medical documentation may be requested when a sickness absence is continuous for **three or more working days**. [Page 6]
+08. [PASS] How long is the probation period?
+09. [PASS] What are the standard working hours?
+10. [PASS] What days do full-time employees normally work?
+11. [PASS] What is the employee referral bonus?
+12. [PASS] After how many days does a referred employee become eligible for the referral bonus?
+13. [FAIL] What is the guideline for internal transfer eligibility?
+    Expected: 6
+    Actual: Employees should have completed at least six months in their current role before requesting an internal transfer, unless the current manager and People Operations approve an exception. 【Page 9】
+14. [PASS] How often are performance reviews conducted?
+15. [PASS] When is salary normally paid?
+16. [PASS] Within how many days should expense claims be submitted?
+17. [PASS] What month basis is used for loss of pay calculations?
+18. [PASS] What is the notice period for confirmed employees?
+19. [PASS] What is the notice period during probation?
+20. [PASS] How should API keys and credentials be stored?
+21. [PASS] Can employees freely share confidential information with AI tools?
+22. [PASS] Does the company provide free gym membership?
+23. [PASS] Does the company provide free lunch every day?
+24. [PASS] Which health insurance company does Northstar use?
+25. [PASS] Does the company provide employees with a company car?
+26. [PASS] What is the CEO's home address?
+27. [PASS] Does every employee receive a MacBook Pro?
+28. [FAIL] Does the company pay for Netflix subscriptions?
+    Expected: None
+    Actual: No. Personal purchases such as a Netflix subscription are considered non‑reimbursable expenses. [Page 12]
+29. [PASS] What is the company's annual revenue?
+30. [PASS] How many customers does the company have?
+
+=== EVALUATION SUMMARY ===
+Total cases: 30
+Passed: 26
+Failed: 4
+Pass rate: 86.67%
