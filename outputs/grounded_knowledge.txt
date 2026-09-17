@@ -1,0 +1,12 @@
+
+=== GROUNDED KNOWLEDGE ===
+
+Question: How many annual leave days do eligible full-time employees receive?
+Answer: Eligible full-time employees receive **18 days** of paid annual leave per completed year of service. 【Page 5】
+Citations: ['[Page 5]']
+Refused: False
+
+Question: Does the company provide employees with a free gym membership?
+Answer: The requested information could not be found in the Employee Handbook.
+Citations: []
+Refused: True

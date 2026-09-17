@@ -161,3 +161,149 @@ The tests verify:
 - Rejection of output that does not satisfy the Pydantic response schema.
 
 ---
+
+## Grounded Knowledge
+
+The Employee HR Assistant uses Retrieval-Augmented Generation (RAG) to answer questions from the Employee Handbook rather than relying on the model's general knowledge.
+
+The knowledge pipeline uses the fictional Employee Handbook stored at:
+
+```text
+data/employee_handbook.pdf
+```
+
+### Retrieval Pipeline
+
+```text
+Employee Handbook PDF
+        |
+        v
+    PyPDFLoader
+        |
+        v
+     Chunking
+        |
+        v
+Local Hugging Face Embeddings
+        |
+        v
+      FAISS
+        |
+        v
+     Retriever
+        |
+        v
+Relevant Handbook Chunks
+        |
+        v
+Grounded LLM Response
+```
+
+The PDF is loaded using `PyPDFLoader` and divided into smaller chunks using `RecursiveCharacterTextSplitter`.
+
+The current chunk configuration is:
+
+```text
+Chunk size: 1000 characters
+Chunk overlap: 150 characters
+```
+
+The chunks are converted into vector embeddings using the local `sentence-transformers/all-MiniLM-L6-v2` embedding model and indexed using FAISS.
+
+For each employee question, the retriever returns the most semantically relevant handbook chunks instead of sending the complete handbook to the language model.
+
+### Grounded Answer Generation
+
+The language model receives the employee question together with the retrieved handbook context.
+
+It is explicitly instructed to:
+
+- Answer only from the supplied handbook context.
+- Avoid using outside knowledge for company policies.
+- Avoid inventing policies that are not documented.
+- Include the supporting handbook page citation.
+- Refuse to answer when the retrieved context does not contain sufficient information.
+
+Example supported question:
+
+```text
+How many annual leave days do eligible full-time employees receive?
+```
+
+Example response:
+
+```text
+Eligible full-time employees receive 18 days of paid annual
+leave for each completed year of service. (Page 5)
+```
+
+The page information originates from the metadata attached to the PDF documents during retrieval.
+
+### Grounded Refusal
+
+Vector similarity search returns the closest available chunks even when the handbook does not contain an answer to the employee's question.
+
+For this reason, retrieval alone is not treated as proof that an answer exists.
+
+The retrieved context is checked during grounded answer generation. If the context does not provide enough information, the service returns a refusal instead of generating an unsupported company policy.
+
+Example unsupported question:
+
+```text
+Does the company provide employees with a free gym membership?
+```
+
+Response:
+
+```text
+The requested information could not be found in the Employee Handbook.
+```
+
+The structured response records this state as:
+
+```text
+Citations: []
+Refused: True
+```
+
+This prevents the assistant from presenting unsupported information as an official company policy.
+
+### Grounded Response Schema
+
+Grounded responses are validated using Pydantic:
+
+```python
+class GroundedResponse(BaseModel):
+    answer: str
+    citations: list[str]
+    refused: bool
+```
+
+A successful grounded response contains the answer and its supporting page citation.
+
+An unsupported request returns an empty citation list and sets `refused` to `True`.
+
+### Run Grounded Knowledge
+
+From the project root:
+
+```bash
+uv run python -m grounded_knowledge.grounded_knowledge
+```
+
+### Automated Tests
+
+Run:
+
+```bash
+uv run pytest tests/test_grounded_knowledge.py -v
+```
+
+The automated tests verify:
+
+- Successful retrieval of a known handbook policy.
+- Correct policy information from the retrieved context.
+- Presence of the supporting page citation.
+- Refusal for information that is not present in the handbook.
+- Absence of fabricated citations on refused responses.
+- Rejection of empty questions.
