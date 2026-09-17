@@ -1,0 +1,17 @@
+GUARDRAIL EVIDENCE
+
+=== STEP LIMIT ===
+Step limit reached: maximum 1 model hop allowed per branch.
+
+=== TIMEOUT ===
+Timeout fired: operation exceeded 0.5 seconds
+
+=== RETRY ===
+Retry attempt 1
+Retry attempt 2
+Retry attempt 3
+Retry succeeded
+Retry limit: maximum 3 attempts
+
+=== TOKEN BUDGET ===
+Token budget exceeded: 501/500
