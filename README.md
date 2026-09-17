@@ -430,3 +430,178 @@ The tests verify:
 - Streaming of generated model chunks.
 - Successful stream completion.
 - Error handling for an empty question.
+
+---
+
+## Observability
+
+The Employee HR Assistant includes an observability layer for tracking individual requests, application behavior, performance, refusals, and failures.
+
+The implementation provides:
+
+- Correlation IDs
+- Structured JSON logs
+- Prometheus-compatible metrics
+- Request latency measurement
+- Grounded refusal tracking
+- Error tracking
+- High-latency alerting
+
+
+### Correlation IDs
+
+Every request receives a unique UUID correlation ID.
+
+Example:
+
+```text
+a17dc38c-7c76-4a87-a76d-84ad719bf690
+```
+
+The same correlation ID is included in the structured events generated during that request.
+
+This makes it possible to associate request start, completion, refusal, failure, and alert events with the same execution.
+
+### Structured Logging
+
+Application events are recorded as JSON rather than unstructured print statements.
+
+Example request event:
+
+```json
+{
+    "event": "request_started",
+    "correlation_id": "a17dc38c-7c76-4a87-a76d-84ad719bf690",
+    "question": "How many annual leave days do eligible full-time employees receive?"
+}
+```
+
+Example completion event:
+
+```json
+{
+    "event": "request_completed",
+    "correlation_id": "a17dc38c-7c76-4a87-a76d-84ad719bf690",
+    "latency_seconds": 2.831,
+    "refused": false,
+    "citations": ["[Page 5]"]
+}
+```
+
+Structured logs make application events easier to search, filter, and process using monitoring systems.
+
+### Application Metrics
+
+Prometheus-compatible metrics are collected using `prometheus-client`.
+
+The service currently records:
+
+| Metric | Purpose |
+| --- | --- |
+| `hr_assistant_requests_total` | Total HR Assistant requests |
+| `hr_assistant_errors_total` | Total failed requests |
+| `hr_assistant_refusals_total` | Questions refused because the handbook did not contain sufficient information |
+| `hr_assistant_request_latency_seconds` | Distribution of request processing latency |
+
+A request increments:
+
+```text
+hr_assistant_requests_total
+```
+
+A failed request increments:
+
+```text
+hr_assistant_errors_total
+```
+
+An unsupported handbook question increments:
+
+```text
+hr_assistant_refusals_total
+```
+
+Request duration is recorded in the latency histogram.
+
+### Refusal Monitoring
+
+Grounded refusals are monitored separately from application errors.
+
+For example:
+
+```text
+Does the company provide employees with a free gym membership?
+```
+
+is not considered a system failure.
+
+The application successfully processes the request, but the Employee Handbook does not contain sufficient information to answer it.
+
+The refusal counter allows these cases to be monitored independently:
+
+```text
+hr_assistant_refusals_total
+```
+
+This distinction separates unsupported knowledge requests from actual application failures.
+
+### High-Latency Alert
+
+The observability layer includes a high-latency alert.
+
+The current threshold is:
+
+```text
+5 seconds
+```
+
+If a request exceeds the threshold, the application emits a structured alert event:
+
+```json
+{
+    "event": "high_latency_alert",
+    "correlation_id": "example-id",
+    "latency_seconds": 6.0,
+    "threshold_seconds": 5.0
+}
+```
+
+The alert logic is tested directly with both high and normal latency values.
+
+This allows the alert behavior to be verified without intentionally slowing down real model requests.
+
+### Run Observability
+
+From the project root:
+
+```bash
+uv run python -m observability.observability
+```
+
+The output includes:
+
+- Structured request logs
+- Correlation ID
+- Grounded answer
+- Request latency
+- Prometheus metrics
+- Alert event when the configured condition is exceeded
+
+### Automated Tests
+
+Run:
+
+```bash
+uv run pytest tests/test_observability.py -v
+```
+
+The tests verify:
+
+- Successful observable request processing
+- Correlation ID generation
+- Grounded refusal handling
+- Prometheus metric exposure
+- High-latency alert triggering
+- Normal-latency behavior
+- Application failure handling
+
